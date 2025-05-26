@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block title %}Earnings & Reports{% endblock %}
+{% block content %}
+
+<div class="container my-5">
+  <h2 class="text-white text-center mb-4">Ganancias y Reportes</h2>
+
+  <!-- Total Earnings -->
+  <div class="text-center mb-5">
+    <h3 class="text-white">Ganancias Totales: <strong>${{ total_earnings }}</strong></h3>
+  </div>
+
+  <div class="row">
+    
+    <!-- Service Earnings Chart -->
+    <div class="col-md-6 mb-4">
+      <div class="card bg-dark text-white shadow">
+        <div class="card-body">
+          <h5 class="card-title text-center">Ganancias por Tipo de Servicio</h5>
+          <canvas id="serviceChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Item Usage Chart -->
+    <div class="col-md-6 mb-4">
+      <div class="card bg-dark text-white shadow">
+        <div class="card-body">
+          <h5 class="card-title text-center">Distribución de Ítems Vendidos</h5>
+          <canvas id="itemChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+    <!-- Monthly Earnings Chart -->
+    <div class="col-12 mb-4">
+      <div class="card bg-dark text-white shadow">
+        <div class="card-body">
+          <h5 class="card-title text-center">Ganancias Mensuales</h5>
+          <canvas id="monthlyChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+  <div class="text-center mt-4">
+    <a href="{% url 'dashboard' %}" class="btn btn-outline-light">Volver al Dashboard</a>
+  </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  // Service Types Pie Chart
+  const serviceCtx = document.getElementById('serviceChart');
+  new Chart(serviceCtx, {
+    type: 'pie',
+    data: {
+      labels: {{ service_labels|safe }},
+      datasets: [{
+        data: {{ service_totals|safe }},
+        backgroundColor: [
+          'rgba(255, 99, 132, 0.7)',
+          'rgba(54, 162, 235, 0.7)',
+          'rgba(255, 206, 86, 0.7)',
+          'rgba(75, 192, 192, 0.7)',
+          'rgba(153, 102, 255, 0.7)',
+          'rgba(255, 159, 64, 0.7)'
+        ],
+        borderColor: 'rgba(255, 255, 255, 0.2)',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          labels: { color: 'white' }
+        }
+      }
+    }
+  });
+
+  // Items Sold Bar Chart
+  const itemCtx = document.getElementById('itemChart');
+  new Chart(itemCtx, {
+    type: 'bar',
+    data: {
+      labels: {{ item_labels|safe }},
+      datasets: [{
+        label: 'Cantidad Vendida',
+        data: {{ item_counts|safe }},
+        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+        borderColor: 'white',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { color: 'white' },
+          grid: { color: 'rgba(255,255,255,0.1)' }
+        },
+        x: {
+          ticks: { color: 'white' },
+          grid: { color: 'rgba(255,255,255,0.1)' }
+        }
+      },
+      plugins: {
+        legend: { labels: { color: 'white' } }
+      }
+    }
+  });
+
+  // Monthly Earnings Line Chart
+  const monthlyCtx = document.getElementById('monthlyChart');
+  new Chart(monthlyCtx, {
+    type: 'line',
+    data: {
+      labels: {{ month_labels|safe }},
+      datasets: [{
+        label: 'Ganancias Mensuales ($)',
+        data: {{ month_totals|safe }},
+        fill: false,
+        borderColor: 'white',
+        backgroundColor: 'white',
+        tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { color: 'white' },
+          grid: { color: 'rgba(255,255,255,0.1)' }
+        },
+        x: {
+          ticks: { color: 'white' },
+          grid: { color: 'rgba(255,255,255,0.1)' }
+        }
+      },
+      plugins: {
+        legend: { labels: { color: 'white' } }
+      }
+    }
+  });
+</script>
+
+
+{% endblock %}

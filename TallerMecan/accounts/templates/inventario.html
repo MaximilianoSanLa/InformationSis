@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Inventario{% endblock %}
+{% block content %}
+<h2 class="text-center mb-4">Inventario</h2>
+
+{% for item in items %}
+  <div class="card mb-3 p-3">
+    <h4>{{ item.name }}</h4>
+    <p>{{ item.description }}</p>
+    <p><strong>Precio:</strong> ${{ item.price }}</p>
+
+    {% if item.stock_set.all %}
+      <h6>Ubicaciones:</h6>
+      <ul>
+        {% for stock in item.stock_set.all %}
+          <li>{{ stock.location }} — {{ stock.amount }} unidades</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-muted">Sin stock registrado.</p>
+    {% endif %}
+  </div>
+{% endfor %}
+
+<a href="{% url 'dashboard' %}" class="btn btn-outline-light mt-4">Volver al Dashboard</a>
+{% endblock %}

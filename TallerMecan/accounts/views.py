@@ -1,0 +1,177 @@
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from .models import Item, Stock, SoldService, SoldItem, Item
+from django.db.models import Prefetch,Sum
+from django.db.models.functions import TruncMonth
+from .forms import ItemForm, StockForm,InvoiceForm
+from django.contrib import messages
+from django.shortcuts import get_object_or_404
+def login_view(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        user = authenticate(request, username=username, password=password)
+        if user:
+            login(request, user)
+            return redirect('dashboard')
+        else:
+            return render(request, 'login.html', {'error': 'Credenciales inválidas'})
+    return render(request, 'login.html')
+
+@login_required
+def dashboard(request):
+    return render(request, 'dashboard.html')
+
+def logout_view(request):
+    logout(request)
+    return redirect('login')
+@login_required
+def inventario_view(request):
+    items = Item.objects.prefetch_related(
+        Prefetch('stock_set', queryset=Stock.objects.all())
+    )
+    return render(request, 'inventario.html', {'items': items})
+@login_required
+def manejar_inventario_view(request):
+    items = Item.objects.prefetch_related('stock_set')
+    item_form = ItemForm()
+    stock_form = StockForm()
+
+    # Handle new item
+    if 'add_item' in request.POST:
+        item_form = ItemForm(request.POST)
+        if item_form.is_valid():
+            item_form.save()
+            return redirect('manejar_inventario')
+
+    # Handle new stock
+    if 'add_stock' in request.POST:
+        stock_form = StockForm(request.POST)
+        if stock_form.is_valid():
+            stock_form.save()
+            return redirect('manejar_inventario')
+
+    return render(request, 'manejar_inventario.html', {
+        'items': items,
+        'item_form': item_form,
+        'stock_form': stock_form
+    })
+
+@login_required
+def delete_item(request, item_id):
+    item = get_object_or_404(Item, id=item_id)
+    item.delete()
+    return redirect('manejar_inventario')
+
+@login_required
+def delete_stock(request, stock_id):
+    stock = get_object_or_404(Stock, id=stock_id)
+    stock.delete()
+    return redirect('manejar_inventario')
+
+@login_required
+def warranty_view(request):
+    query = request.GET.get("q", "")
+    services = SoldService.objects.filter(warranty__icontains=query) if query else SoldService.objects.all()
+    return render(request, "warranty.html", {"services": services, "query": query})
+
+@login_required
+def earnings_and_reports_view(request):
+    total_earnings = SoldService.objects.aggregate(total=Sum('total_sold'))['total'] or 0
+
+    # Earnings by service type
+    service_data = (
+        SoldService.objects
+        .values('service_type__name')
+        .annotate(total=Sum('total_sold'))
+        .order_by('-total')
+    )
+    service_labels = [entry['service_type__name'] for entry in service_data]
+    service_totals = [float(entry['total']) for entry in service_data]
+
+    # Items sold count
+    item_data = (
+        SoldItem.objects
+        .values('item__name')
+        .annotate(count=Sum('amount'))
+        .order_by('-count')
+    )
+    item_labels = [entry['item__name'] for entry in item_data]
+    item_counts = [entry['count'] for entry in item_data]
+
+    # Earnings per month
+    monthly_data = (
+        SoldService.objects
+        .annotate(month=TruncMonth('date'))
+        .values('month')
+        .annotate(total=Sum('total_sold'))
+        .order_by('month')
+    )
+    month_labels = [entry['month'].strftime('%b %Y') for entry in monthly_data]
+    month_totals = [float(entry['total']) for entry in monthly_data]
+
+    context = {
+        'total_earnings': total_earnings,
+        'service_labels': service_labels,
+        'service_totals': service_totals,
+        'item_labels': item_labels,
+        'item_counts': item_counts,
+        'month_labels': month_labels,
+        'month_totals': month_totals,
+    }
+    return render(request, 'earnings_and_reports.html', context)
+
+@login_required
+def generar_factura_view(request):
+    items = Item.objects.all()
+    form = InvoiceForm(request.POST or None)
+
+    if request.method == "POST":
+        selected_items = request.POST.getlist('item')
+        quantities = request.POST.getlist('quantity')
+        service_type_id = request.POST.get('service_type')
+        license_plate = request.POST.get('license_plate')
+
+        if not selected_items or not service_type_id or not license_plate:
+            messages.error(request, "Todos los campos son obligatorios.")
+            return redirect("generar_factura")
+
+        total = 0
+        sold_items_data = []
+
+        for i, item_id in enumerate(selected_items):
+            try:
+                item = Item.objects.get(id=item_id)
+                quantity = int(quantities[i])
+                if quantity <= 0:
+                    raise ValueError()
+
+                total += item.price * quantity
+                sold_items_data.append((item, quantity))
+            except (Item.DoesNotExist, ValueError):
+                messages.error(request, "Error con la cantidad o el ítem.")
+                return redirect("generar_factura")
+
+        # Create sold service
+        sold_service = SoldService.objects.create(
+            service_type_id=service_type_id,
+            total_sold=total,
+            license_plate=license_plate
+        )
+
+        # Create sold items and update stock
+        for item, quantity in sold_items_data:
+            SoldItem.objects.create(sold_service=sold_service, item=item, amount=quantity)
+
+            stock = Stock.objects.filter(item=item).first()
+            if stock and stock.amount >= quantity:
+                stock.amount -= quantity
+                stock.save()
+            else:
+                messages.warning(request, f"No hay suficiente inventario para {item.name}.")
+
+        messages.success(request, f"Factura generada con éxito. Garantía: {sold_service.warranty}")
+        return redirect("generar_factura")
+
+    return render(request, "factura.html", {"items": items, "form": form})

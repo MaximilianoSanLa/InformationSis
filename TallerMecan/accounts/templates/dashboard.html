@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h2 class="mb-4 text-center">Panel Principal</h2>
+<div class="row g-4 text-center">
+
+<div class="container mt-5">
+  <div class="row g-4">
+
+    <!-- Inventario -->
+    <div class="col-md-4">
+      <a href="{% url 'inventario' %}" class="text-decoration-none">
+        <div class="card bg-dark text-white text-center shadow">
+          <div class="card-body">
+            <h5 class="card-title">Inventario</h5>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <!-- Garantías -->
+    <div class="col-md-4">
+      <a href="{% url 'garantias' %}" class="text-decoration-none">
+        <div class="card bg-dark text-white text-center shadow">
+          <div class="card-body">
+            <h5 class="card-title">Garantías</h5>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <!-- Generar Factura -->
+    <div class="col-md-4">
+      <a href="{% url 'generar_factura' %}" class="text-decoration-none">
+        <div class="card bg-dark text-white text-center shadow">
+          <div class="card-body">
+            <h5 class="card-title">Generar Factura</h5>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <!-- Manejar Inventario -->
+    <div class="col-md-4">
+      <a href="{% url 'manejar_inventario' %}" class="text-decoration-none">
+        <div class="card bg-dark text-white text-center shadow">
+          <div class="card-body">
+            <h5 class="card-title">Manejar Inventario</h5>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <!-- Reportes -->
+    <div class="col-md-4">
+      <a href="{% url 'earnings_reports' %}" class="text-decoration-none">
+        <div class="card bg-dark text-white text-center shadow">
+          <div class="card-body">
+            <h5 class="card-title">Reportes</h5>
+          </div>
+        </div>
+      </a>
+    </div>
+
+  </div>
+</div>
+
+</div>
+
+<div class="text-center mt-4">
+  <a href="{% url 'logout' %}" class="btn btn-outline-light">Cerrar Sesión</a>
+</div>
+{% endblock %}

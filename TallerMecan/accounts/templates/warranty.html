@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Garantías{% endblock %}
+{% block content %}
+
+<div class="container my-5">
+  <h2 class="text-white text-center mb-4">Garantías de Servicios Vendidos</h2>
+
+  <!-- Search Bar -->
+  <form method="get" class="mb-4">
+    <div class="input-group">
+      <input type="text" name="q" class="form-control" placeholder="Buscar por número de garantía..." value="{{ query }}">
+      <button type="submit" class="btn btn-outline-light">Buscar</button>
+    </div>
+  </form>
+
+  {% if services %}
+    <div class="row row-cols-1 g-4">
+      {% for service in services %}
+        <div class="col">
+          <div class="card bg-dark text-white shadow">
+            <div class="card-body">
+              <h5 class="card-title">{{ service.service_type.name }}</h5>
+              <p class="card-text mb-1"><strong>Placa:</strong> {{ service.license_plate }}</p>
+              <p class="card-text mb-1"><strong>Valor Total:</strong> ${{ service.total_sold }}</p>
+              <p class="card-text mb-0"><strong>Garantía #:</strong> {{ service.warranty }}</p>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-white mt-4">No se encontraron servicios con esa garantía.</p>
+  {% endif %}
+
+  <div class="text-center mt-4">
+    <a href="{% url 'dashboard' %}" class="btn btn-outline-light">Volver al Dashboard</a>
+  </div>
+</div>
+
+{% endblock %}
