@@ -186,3 +186,10 @@ def generar_factura_view(request):
             return redirect("generar_factura")
 
     return render(request, "factura.html", {"items": items, "form": form})
+@login_required
+def ventas_view(request):
+    sold_items_qs = SoldItem.objects.select_related('item')
+    sold_services = SoldService.objects.select_related('service_type').prefetch_related(
+        Prefetch('solditem_set', queryset=sold_items_qs)
+    ).order_by('-date')
+    return render(request, "ventas.html", {"sold_services": sold_services})

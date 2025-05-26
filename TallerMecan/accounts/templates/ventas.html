@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Ventas{% endblock %}
+{% block content %}
+<h2 class="text-center mb-4 text-white">Historial de Ventas</h2>
+
+{% for service in sold_services %}
+  <div class="card mb-4 p-3 bg-dark text-white">
+    <h5>Servicio: {{ service.service_type.name }}</h5>
+    <p><strong>Fecha:</strong> {{ service.date }}</p>
+    <p><strong>Placa:</strong> {{ service.license_plate }}</p>
+    <p><strong>Garantía:</strong> {{ service.warranty }}</p>
+    <p><strong>Total:</strong> ${{ service.total_sold }}</p>
+
+    <h6>Ítems vendidos:</h6>
+    <ul>
+      {% for sold_item in service.solditem_set.all %}
+        <li>{{ sold_item.item.name }} — {{ sold_item.amount }} unidades</li>
+      {% endfor %}
+    </ul>
+  </div>
+{% empty %}
+  <p class="text-white">No hay ventas registradas.</p>
+{% endfor %}
+
+<a href="{% url 'dashboard' %}" class="btn btn-outline-light mt-4">Volver al Dashboard</a>
+{% endblock %}

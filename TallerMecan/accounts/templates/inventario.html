@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Inventario{% endblock %}
 {% block content %}
-<h2 class="text-center mb-4">Inventario</h2>
+<h2 class="text-center mb-4 text-white">Inventario</h2>
 
 {% for item in items %}
-  <div class="card mb-3 p-3">
+  <div class="card mb-3 p-3 bg-dark text-white">
     <h4>{{ item.name }}</h4>
     <p>{{ item.description }}</p>
     <p><strong>Precio:</strong> ${{ item.price }}</p>

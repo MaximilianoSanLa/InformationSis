@@ -12,4 +12,5 @@ urlpatterns = [
     path("warranties/", views.warranty_view, name="garantias"), 
     path("reports/", views.earnings_and_reports_view, name="earnings_reports"),
     path("factura/", views.generar_factura_view, name="generar_factura"),
+    path("ventas/", views.ventas_view, name="ventas_view"),
 ]
