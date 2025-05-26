@@ -13,4 +13,3 @@ class StockForm(forms.ModelForm):
 class InvoiceForm(forms.Form):
     service_type = forms.ModelChoiceField(queryset=ServiceType.objects.all(), label="Tipo de Servicio")
     license_plate = forms.CharField(label="Placa", max_length=20)
-    items = forms.ModelMultipleChoiceField(queryset=Item.objects.all(), widget=forms.CheckboxSelectMultiple, required=False)

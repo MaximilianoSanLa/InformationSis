@@ -2,66 +2,56 @@
 {% load static %}
 
 {% block content %}
-<div class="container mt-5 text-white">
+<div class="container mt-5">
   <h2>Generar Factura</h2>
+
   <form method="post">
     {% csrf_token %}
+    {{ form.as_p }}
 
-    <div class="mb-3">
-      {{ form.service_type.label_tag }} {{ form.service_type }}
-    </div>
-    <div class="mb-3">
-      {{ form.license_plate.label_tag }} {{ form.license_plate }}
-    </div>
+    <input type="text" id="itemSearch" class="form-control mb-3" placeholder="Buscar item por nombre">
 
-    <h4>Seleccionar Ítems</h4>
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Seleccionar</th>
+          <th>Nombre</th>
+          <th>Precio</th>
+          <th>Cantidad</th>
+        </tr>
+      </thead>
+      <tbody id="itemTable">
+        {% for item in items %}
+        <tr>
+          <td>
+            <input type="checkbox" name="item" value="{{ item.id }}">
+          </td>
+          <td class="item-name">{{ item.name }}</td>
+          <td>${{ item.price }}</td>
+          <td>
+            <input type="number" name="quantity_{{ item.id }}" value="1" min="1" class="form-control" style="width: 100px;">
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
 
-    <!-- Search Bar -->
-    <div class="mb-3">
-      <input type="text" id="itemSearch" class="form-control" placeholder="Buscar por nombre del ítem...">
-    </div>
-
-    <div class="table-responsive bg-dark p-3 rounded">
-      <table class="table table-bordered text-white" id="itemsTable">
-        <thead>
-          <tr>
-            <th>Seleccionar</th>
-            <th>Nombre</th>
-            <th>Precio</th>
-            <th>Cantidad</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for item in items %}
-          <tr>
-            <td><input type="checkbox" name="item" value="{{ item.id }}"></td>
-            <td class="item-name">{{ item.name }}</td>
-            <td>${{ item.price }}</td>
-            <td><input type="number" name="quantity" min="1" class="form-control" style="width: 80px;"></td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-
-    <button type="submit" class="btn btn-light mt-3">Generar Factura</button>
+    <button type="submit" class="btn btn-success">Generar Factura</button>
   </form>
   <div class="text-center mt-4">
     <a href="{% url 'dashboard' %}" class="btn btn-outline-light">Volver al Dashboard</a>
   </div>
 </div>
 
-<!-- Search Filter Script -->
 <script>
-  document.getElementById("itemSearch").addEventListener("input", function () {
-    const query = this.value.toLowerCase();
-    const rows = document.querySelectorAll("#itemsTable tbody tr");
+  document.getElementById("itemSearch").addEventListener("keyup", function () {
+    const filter = this.value.toLowerCase();
+    const rows = document.querySelectorAll("#itemTable tr");
 
     rows.forEach(row => {
       const name = row.querySelector(".item-name").textContent.toLowerCase();
-      row.style.display = name.includes(query) ? "" : "none";
+      row.style.display = name.includes(filter) ? "" : "none";
     });
   });
 </script>
 {% endblock %}
-

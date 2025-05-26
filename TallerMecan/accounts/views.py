@@ -7,6 +7,8 @@ from django.db.models.functions import TruncMonth
 from .forms import ItemForm, StockForm,InvoiceForm
 from django.contrib import messages
 from django.shortcuts import get_object_or_404
+import random
+from django.utils import timezone
 def login_view(request):
     if request.method == 'POST':
         username = request.POST['username']
@@ -128,50 +130,59 @@ def generar_factura_view(request):
     form = InvoiceForm(request.POST or None)
 
     if request.method == "POST":
-        selected_items = request.POST.getlist('item')
-        quantities = request.POST.getlist('quantity')
-        service_type_id = request.POST.get('service_type')
-        license_plate = request.POST.get('license_plate')
+        if form.is_valid():
+            service_type = form.cleaned_data['service_type']
+            license_plate = form.cleaned_data['license_plate']
+            selected_items = request.POST.getlist('item')
 
-        if not selected_items or not service_type_id or not license_plate:
-            messages.error(request, "Todos los campos son obligatorios.")
-            return redirect("generar_factura")
-
-        total = 0
-        sold_items_data = []
-
-        for i, item_id in enumerate(selected_items):
-            try:
-                item = Item.objects.get(id=item_id)
-                quantity = int(quantities[i])
-                if quantity <= 0:
-                    raise ValueError()
-
-                total += item.price * quantity
-                sold_items_data.append((item, quantity))
-            except (Item.DoesNotExist, ValueError):
-                messages.error(request, "Error con la cantidad o el ítem.")
+            if not selected_items:
+                messages.error(request, "Debes seleccionar al menos un ítem.")
                 return redirect("generar_factura")
 
-        # Create sold service
-        sold_service = SoldService.objects.create(
-            service_type_id=service_type_id,
-            total_sold=total,
-            license_plate=license_plate
-        )
+            total = 0
+            sold_items_data = []
 
-        # Create sold items and update stock
-        for item, quantity in sold_items_data:
-            SoldItem.objects.create(sold_service=sold_service, item=item, amount=quantity)
+            for item_id in selected_items:
+                try:
+                    item = Item.objects.get(id=item_id)
+                    quantity_str = request.POST.get(f'quantity_{item_id}', '0')
+                    quantity = int(quantity_str)
 
-            stock = Stock.objects.filter(item=item).first()
-            if stock and stock.amount >= quantity:
-                stock.amount -= quantity
-                stock.save()
-            else:
-                messages.warning(request, f"No hay suficiente inventario para {item.name}.")
+                    if quantity <= 0:
+                        raise ValueError()
 
-        messages.success(request, f"Factura generada con éxito. Garantía: {sold_service.warranty}")
-        return redirect("generar_factura")
+                    total += item.price * quantity
+                    sold_items_data.append((item, quantity))
+                except (Item.DoesNotExist, ValueError):
+                    messages.error(request, f"Error con el ítem o cantidad para ID {item_id}.")
+                    return redirect("generar_factura")
+
+            # Generate unique warranty number
+            warranty = random.randint(100000000, 999999999)
+            while SoldService.objects.filter(warranty=warranty).exists():
+                warranty = random.randint(100000000, 999999999)
+
+            # Create sold service
+            sold_service = SoldService.objects.create(
+                service_type=service_type,
+                total_sold=total,
+                license_plate=license_plate,
+                warranty=warranty,
+                date=timezone.now()
+            )
+
+            # Create sold items and update stock
+            for item, quantity in sold_items_data:
+                SoldItem.objects.create(sold_service=sold_service, item=item, amount=quantity)
+
+                stock = Stock.objects.filter(item=item).first()
+                if stock and stock.amount >= quantity:
+                    stock.amount -= quantity
+                    stock.save()
+                else:
+                    messages.warning(request, f"No hay suficiente inventario para {item.name}.")
+
+            messages.success(request, f"Factura generada con éxito. Garantía: {sold_service.warranty}")
+            return redirect("generar_factura")
 
     return render(request, "factura.html", {"items": items, "form": form})

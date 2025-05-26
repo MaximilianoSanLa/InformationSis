@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Factura</title>
+    <style>
+        body { font-family: sans-serif; }
+        h1 { color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ccc; padding: 8px; }
+        th { background-color: #f5f5f5; }
+    </style>
+</head>
+<body>
+    <h1>Factura</h1>
+    <p><strong>Placa:</strong> {{ sold_service.license_plate }}</p>
+    <p><strong>Garantía:</strong> {{ sold_service.warranty }}</p>
+    <p><strong>Tipo de Servicio:</strong> {{ sold_service.service_type }}</p>
+    <p><strong>Fecha:</strong> {{ sold_service.date }}</p>
+
+    <h2>Items</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Cantidad</th>
+                <th>Precio</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in sold_items %}
+            <tr>
+                <td>{{ item.item.name }}</td>
+                <td>{{ item.amount }}</td>
+                <td>${{ item.item.price }}</td>
+                <td>${{ item.amount|mul:item.item.price }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h3>Total: ${{ sold_service.total_sold }}</h3>
+</body>
+</html>
